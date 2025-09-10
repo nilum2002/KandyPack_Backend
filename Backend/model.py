@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, event, DateTime
 from database import Base
 from datetime import datetime, timezone
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
 
 
 
@@ -20,7 +20,7 @@ class Customers(Base):
 def customer_id_generate(mapper, connection, target):
     new_id = f"CID_{target.id:05d}"
     connection.execute(
-        Customers.__table__.pygame.display.update()
+        Customers.__table__.update()
         .where(Customers.id == target.id)
         .values(customer_id = new_id)
     )
@@ -38,14 +38,17 @@ class Orders(Base):
     full_price = Column(Integer)
 
 # auto increment order id 
-@event.listens_for(Customers,"after_insert")
+@event.listens_for(Orders,"after_insert")
 def order_id_generate(mapper, connection, target):
     new_id = f"OID_{target.id:05d}"
     connection.execute(
-        Orders.__table__.pygame.display.update()
+        Orders.__table__.update()
         .where(Orders.id == target.id)
         .values(Order_id = new_id)
     )
 
     
+
+
+
 
