@@ -35,8 +35,7 @@ class storeBase(BaseModel):
     contact_person : str 
 
 class routeBase(BaseModel):
-    route_id : str 
-    route_name : str 
+    route_id : str
     Order_id : str 
     distance : str 
     store_id : str 
@@ -44,6 +43,7 @@ class routeBase(BaseModel):
     end_city : str 
 
 class route_cityBase(BaseModel):
+    route_city_id : str 
     city : str 
     route_id : str
 

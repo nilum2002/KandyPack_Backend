@@ -22,7 +22,7 @@ class Orders(Base):
     __tablename__ = "orders"
     # id = Column(Integer, primary_key=True, autoincrement=True)
     Order_id = Column(String(36), primary_key=True, index = True, default= generate_uuid)
-    customer_id = Column(String(20), ForeignKey("customers.customer_id"))
+    customer_id = Column(String(36), ForeignKey("customers.customer_id"))
     order_date = Column(DateTime, default = lambda : datetime.now(timezone.utc))
     deliver_address = Column(String(200))
     status = Column(String(10))
@@ -42,7 +42,6 @@ class Store(Base):
 class Routes(Base):
     __tablename__ = "routes"
     route_id = Column(String(20), primary_key= True,index=True)
-    route_name = Column(String(20))
     Order_id = Column(String(36), ForeignKey("orders.Order_id"))
     distance = Column(Integer)
     store_id = Column(String(36), ForeignKey("store.store_id"))
@@ -52,7 +51,8 @@ class Routes(Base):
 
 class Rout_cities(Base):
     __tablename__ = "route_cities"
-    city = Column(String(50), primary_key=  True)
+    route_city_id = Column(String(50), primary_key=True, index= True)
+    city = Column(String(50))
     route_id = Column(String(20),ForeignKey("routes.route_id"))
 
 class Product(Base):
