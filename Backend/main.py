@@ -9,13 +9,18 @@ import model
 model.Base.metadata.create_all(bind= engine)
 
 
+class userBase(BaseModel):
+    user_id: str 
+    user_name : str 
+    password_hash: str 
+    role : str 
+    created_at : str 
+
 class customerBase(BaseModel):
     customer_id : str 
     customer_name : str 
     phone_number : str 
     address : str 
-
-
 
 class orderBase(BaseModel):
     Order_id : str 
@@ -27,46 +32,45 @@ class orderBase(BaseModel):
     full_price  : int 
 
 class storeBase(BaseModel):
-    store_id : str
-    telephone_number : str 
+    store_id : str 
     name : str 
+    telephone_number : str 
     address : str 
-    near_railway_station : str 
     contact_person : str 
+    station_id : str 
 
 class routeBase(BaseModel):
-    route_id : str
-    Order_id : str 
-    distance : str 
+    route_id  : str 
     store_id : str 
-    start_city : str 
-    end_city : str 
+    start_city_id : str 
+    end_city_id : str 
+    distance : int 
 
-class route_cityBase(BaseModel):
-    route_city_id : str 
-    city : str 
-    route_id : str
+class routeOrderBase(BaseModel):
+    route_order_id : str 
+    route_id : str 
+    order_id : str 
 
 class productBase(BaseModel):
     product_type_id : str 
-    space_consumption_rate : int
+    product_name : str 
+    space_consumption_rate : int 
 
 class order_itemsBase(BaseModel):
-    item_id : str
-    quantity : int
+    item_id : str 
+    order_id : str 
     store_id : str 
     product_type_id : str 
-    item_price : float
-    Order_id : str 
+    quantity : int 
+    item_price: float
 
 class CityBase(BaseModel):
     city_id :str 
     city_name : str
     province : str 
-    station_id : str  
 
-class RailwaystationBase(BaseModel):
-    station_id : str
+class RailwayStationBase(BaseModel):
+    station_id : str 
     station_name : str 
     city_id : str 
 
@@ -76,48 +80,56 @@ class TrainBase(BaseModel):
     capacity : int 
 
 class Train_SchedulesBase(BaseModel):
-    scheduled_id : str 
-    date : str 
+    schedule_id : str 
+    train_id : str 
+    station_id : str 
     scheduled_date : str 
     departure_time : str 
     arrival_time : str 
-    station_id : str 
-    train_id : str 
     status : str 
 
 class RailwayAllocationBase(BaseModel):
     allocation_id : str 
+    order_id : str 
+    schedule_id : str 
     shipment_date : str 
     status : str 
-    scheduled_id : str 
+
+class driverBase(BaseModel):
+    driver_id : str 
+    name : str 
+    weekly_working_hours : int 
+    user_id : str 
 
 class TruckBase(BaseModel):
     truck_id : str 
-    capacity : int
     license_num : str 
-    is_active : bool
+    capacity : int 
+    is_active  : bool
 
 class AssistantBase(BaseModel):
     assistant_id : str 
     name : str 
-    weekly_working_hours : int 
+    weekly_working_hours : str 
+    user_id : str 
 
 class Truck_SchedulesBase(BaseModel):
-    scheduled_id : str 
-    date : str 
-    scheduled_date : str 
-    departure_time : str 
-    duration : int 
+    schedule_id : str 
     route_id : str 
     truck_id : str 
-    assistant_id : str
+    driver_id : str 
+    assistant_id : str 
+    scheduled_date : str 
+    departure_time : str 
+    duration : str 
     status : str 
 
 class Truck_allocationBase(BaseModel):
     allocation_id : str 
+    order_id : str 
+    schedule_id : str 
     shipment_date : str 
-    scheduled_id : str 
-
+    status  : str 
 def get_db():
     db = Session_local()
     try:
