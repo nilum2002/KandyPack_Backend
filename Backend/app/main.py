@@ -1,135 +1,11 @@
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException , Depends, status 
+from app.core.database import engine, Base, Session_local
+from app.api import api_router
+import app.core.model as model
 from typing import Annotated
-from database import engine, Session_local
-import model
+from sqlalchemy.orm import Session
 
-
-
-
-model.Base.metadata.create_all(bind= engine)
-
-
-class userBase(BaseModel):
-    user_id: str 
-    user_name : str 
-    password_hash: str 
-    role : str 
-    created_at : str 
-
-class customerBase(BaseModel):
-    customer_id : str 
-    customer_name : str 
-    phone_number : str 
-    address : str 
-
-class orderBase(BaseModel):
-    Order_id : str 
-    customer_id: str 
-    order_date: str 
-    deliver_address  : str 
-    status : str 
-    Deliver_city : str 
-    full_price  : int 
-
-class storeBase(BaseModel):
-    store_id : str 
-    name : str 
-    telephone_number : str 
-    address : str 
-    contact_person : str 
-    station_id : str 
-
-class routeBase(BaseModel):
-    route_id  : str 
-    store_id : str 
-    start_city_id : str 
-    end_city_id : str 
-    distance : int 
-
-class routeOrderBase(BaseModel):
-    route_order_id : str 
-    route_id : str 
-    order_id : str 
-
-class productBase(BaseModel):
-    product_type_id : str 
-    product_name : str 
-    space_consumption_rate : int 
-
-class order_itemsBase(BaseModel):
-    item_id : str 
-    order_id : str 
-    store_id : str 
-    product_type_id : str 
-    quantity : int 
-    item_price: float
-
-class CityBase(BaseModel):
-    city_id :str 
-    city_name : str
-    province : str 
-
-class RailwayStationBase(BaseModel):
-    station_id : str 
-    station_name : str 
-    city_id : str 
-
-class TrainBase(BaseModel):
-    train_id : str 
-    train_name : str 
-    capacity : int 
-
-class Train_SchedulesBase(BaseModel):
-    schedule_id : str 
-    train_id : str 
-    station_id : str 
-    scheduled_date : str 
-    departure_time : str 
-    arrival_time : str 
-    status : str 
-
-class RailwayAllocationBase(BaseModel):
-    allocation_id : str 
-    order_id : str 
-    schedule_id : str 
-    shipment_date : str 
-    status : str 
-
-class driverBase(BaseModel):
-    driver_id : str 
-    name : str 
-    weekly_working_hours : int 
-    user_id : str 
-
-class TruckBase(BaseModel):
-    truck_id : str 
-    license_num : str 
-    capacity : int 
-    is_active  : bool
-
-class AssistantBase(BaseModel):
-    assistant_id : str 
-    name : str 
-    weekly_working_hours : str 
-    user_id : str 
-
-class Truck_SchedulesBase(BaseModel):
-    schedule_id : str 
-    route_id : str 
-    truck_id : str 
-    driver_id : str 
-    assistant_id : str 
-    scheduled_date : str 
-    departure_time : str 
-    duration : str 
-    status : str 
-
-class Truck_allocationBase(BaseModel):
-    allocation_id : str 
-    order_id : str 
-    schedule_id : str 
-    shipment_date : str 
-    status  : str 
+app = FastAPI()
 def get_db():
     db = Session_local()
     try:
@@ -137,4 +13,13 @@ def get_db():
     finally:
         db.close()
 
+model.Base.metadata.create_all(bind=engine)
 
+
+db_dependancy = Annotated[Session, Depends(get_db)]
+
+app.include_router(api_router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Kandypack Supply Chain API"}

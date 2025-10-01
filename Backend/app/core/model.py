@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, event, DateTime, Float, Date, Time, CheckConstraint, Enum, UniqueConstraint
-from database import Base
+from app.core.database import Base
 from datetime import datetime, timezone, date
 from sqlalchemy.orm import relationship, validates
 import uuid 
