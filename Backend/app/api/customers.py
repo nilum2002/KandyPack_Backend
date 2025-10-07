@@ -11,19 +11,21 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_customer(customer: schemas.CustomerCreate, db: db_dependency):
+    new_customer = model.Customers(
+        customer_name=customer.customer_name,
+        phone_number = customer.phone_number,
+        address = customer.address
+    )
+    db.add(new_customer)
+    db.commit()
+    db.refresh(new_customer)
+    return {"message": "Customer added successfully", "customer": new_customer}
+
+
 @router.get("/")
 async def get_customers():
     return {"Massage": "success"}
-
-
-# @router.post("/", status_code=status.HTTP_201_CREATED)
-# async def create_customer(customer: schemas.CustomerCreate, db: db_dependency):
-#     new_customer = model.Customers(
-#         name=customer.customer_name,
-#         email=customer.phone_number,
-#         address=customer.address
-#     )
-#     db.add(new_customer)
-#     db.commit()
-#     db.refresh(new_customer)
-#     return {"message": "Customer added successfully", "customer": new_customer}
