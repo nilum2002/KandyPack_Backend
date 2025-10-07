@@ -62,7 +62,7 @@ class Orders(Base):
     __table_args__ = (
         CheckConstraint("full_price >= 0", name="positive_price"),
     )
-class Store(Base):
+class Stores(Base):
     __tablename__ = "stores"
     store_id = Column(String(36),primary_key=True,index=True, default= generate_uuid )
     name = Column(String(100), nullable=False)
@@ -120,7 +120,7 @@ class RouteOrders(Base):
     )
 
 
-class Product(Base):
+class Products(Base):
     __tablename__ = "products"
     product_type_id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     product_name = Column(String(100), nullable=False)
@@ -129,7 +129,7 @@ class Product(Base):
         CheckConstraint("space_consumption_rate > 0", name="positive_space_rate"),
     )
 
-class Order_items(Base):
+class OrderItems(Base):
     __tablename__ = "order_items"
     item_id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     order_id = Column(String(36), ForeignKey("orders.order_id"), nullable=False)
@@ -205,7 +205,7 @@ class Trucks(Base):
         CheckConstraint("capacity > 0", name="positive_truck_capacity"),
     )
 
-class Assistance(Base):
+class Assistants(Base):
     __tablename__ = "assistants"
     assistant_id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     name = Column(String(100), nullable=False)
@@ -216,7 +216,7 @@ class Assistance(Base):
         CheckConstraint("weekly_working_hours >= 0 AND weekly_working_hours <= 60", name="assistant_hours_limit"),
     )
     
-class Truck_Schedules(Base):
+class TruckSchedules(Base):
     __tablename__ = "truck_schedules"
     schedule_id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     route_id = Column(String(36), ForeignKey("routes.route_id"), nullable=False)
@@ -237,7 +237,7 @@ class Truck_Schedules(Base):
     )
 
 
-class Truck_allocations(Base):
+class TruckAllocations(Base):
     __tablename__ = "truck_allocations"
     allocation_id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     order_id = Column(String(36), ForeignKey("orders.order_id"), nullable=False)

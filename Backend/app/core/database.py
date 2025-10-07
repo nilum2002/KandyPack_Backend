@@ -9,3 +9,11 @@ DB_URL = "mysql+pymysql://root:nilum%402002@localhost:3306/KandyPack_DB"
 engine = create_engine(DB_URL)
 Session_local = sessionmaker(bind = engine, autoflush= False,autocommit = False)
 Base = declarative_base()
+
+
+def get_db():
+    db = Session_local()
+    try:
+        yield db 
+    finally:
+        db.close()

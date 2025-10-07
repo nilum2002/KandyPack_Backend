@@ -1,21 +1,13 @@
 from fastapi import FastAPI, HTTPException , Depends, status 
-from app.core.database import engine, Base, Session_local
+from app.core.database import engine, Base, get_db
 from app.api import api_router
 import app.core.model as model
 from typing import Annotated
 from sqlalchemy.orm import Session
 
 app = FastAPI()
-def get_db():
-    db = Session_local()
-    try:
-        yield db 
-    finally:
-        db.close()
 
 model.Base.metadata.create_all(bind=engine)
-
-
 db_dependancy = Annotated[Session, Depends(get_db)]
 
 app.include_router(api_router)
