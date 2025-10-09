@@ -16,7 +16,7 @@ class userBase(BaseModel):
     role : str 
     created_at : str 
 
-class customerBase(BaseModel):
+class customer(BaseModel):
     customer_id : str 
     customer_name : str 
     phone_number : str 
@@ -78,7 +78,7 @@ class RailwayStation(BaseModel):
     class Config:
         orm_mode = True
 
-class TrainBase(BaseModel):
+class Train(BaseModel):
     train_id : str 
     train_name : str 
     capacity : int 
@@ -136,9 +136,16 @@ class Truck_allocationBase(BaseModel):
     status  : str 
 
 
-class CustomerCreate(customerBase):
-    pass
+class CustomerCreate(customer):
+    customer_name : str 
+    phone_number : str 
+    address : str 
 
+
+class customerUpdate(customer):
+    customer_name : str 
+    phone_number : str 
+    address : str 
 
 class UserCreate(userBase):
     pass

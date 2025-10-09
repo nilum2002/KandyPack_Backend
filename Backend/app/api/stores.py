@@ -28,7 +28,6 @@ def get_store_by_id(db: db_dependency, store_id: str ):
 
 
 def get_current_user():
-    
     return {"username": "admin", "role": "Management"}
 
 @router.post("/", status_code=status.HTTP_200_OK, response_model=schemas.store)
@@ -73,7 +72,7 @@ def update_store(store_id: str , store_update: schemas.StoreUpdate, db: db_depen
     update_data = store_update.model_dump(exclude_unset=True)
     if "station_id" in update_data:
         station_id_str = str(update_data["station_id"])
-        print(station_id_str)
+        
         station = db.query(model.RailwayStations).filter(model.RailwayStations.station_id == station_id_str).first()
         if not station:
             raise HTTPException(status_code=404, detail=f"Station {station_id_str} not found")
