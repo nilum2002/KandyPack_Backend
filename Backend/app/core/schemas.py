@@ -31,7 +31,7 @@ class orderBase(BaseModel):
     Deliver_city : str 
     full_price  : int 
 
-class storeBase(BaseModel):
+class store(BaseModel):
     store_id : str 
     name : str 
     telephone_number : str 
@@ -142,3 +142,19 @@ class CustomerCreate(customerBase):
 
 class UserCreate(userBase):
     pass
+
+
+class StoreCreate(BaseModel):
+    store_id : str 
+    name : str 
+    telephone_number : str
+    address : str
+    contact_person: str 
+    station_id : str 
+
+class StoreUpdate(BaseModel):
+    name : str 
+    telephone_number : str
+    address : str
+    contact_person: str 
+    station_id : str 
