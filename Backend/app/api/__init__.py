@@ -8,7 +8,7 @@ from app.api.cities import router as city_router
 from app.api.railway_stations import router as railway_stations
 from app.api.stores import router as stores
 from app.api.trains import router as trains
-
+from app.api.orders import router as orders
 
 
 api_router = APIRouter()
@@ -18,4 +18,5 @@ api_router.include_router(city_router)
 api_router.include_router(railway_stations)
 api_router.include_router(stores)
 api_router.include_router(trains)
+api_router.include_router(orders)
 
