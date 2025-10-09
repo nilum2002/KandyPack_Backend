@@ -64,15 +64,19 @@ class order_itemsBase(BaseModel):
     quantity : int 
     item_price: float
 
-class CityBase(BaseModel):
+class City(BaseModel):
     city_id :str 
     city_name : str
     province : str 
+    class Config:
+        orm_mode = True
 
-class RailwayStationBase(BaseModel):
+class RailwayStation(BaseModel):
     station_id : str 
     station_name : str 
     city_id : str 
+    class Config:
+        orm_mode = True
 
 class TrainBase(BaseModel):
     train_id : str 
@@ -138,11 +142,3 @@ class CustomerCreate(customerBase):
 
 class UserCreate(userBase):
     pass
-
-class City(BaseModel):
-    city_id: str 
-    city_name: str
-    province: str
-
-    class Config:
-        orm_mode = True
