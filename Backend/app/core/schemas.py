@@ -2,12 +2,24 @@ from pydantic import BaseModel
 from typing import Annotated
 from app.core.database import engine
 import app.core.model as model
-
-
+from datetime import datetime, timezone, date
+import enum
 
 
 model.Base.metadata.create_all(bind= engine)
 
+class OrderStatus(enum.Enum):
+    PLACED = "Placed"
+    SCHEDULED_RAIL = "Scheduled for Railway"
+    IN_WAREHOUSE = "IN Warehouse"
+    SCHEDULED_ROAD =  "Scheduled for road"
+    DELIVERED = "Delivered"
+    FAILED = "Failed"
+class ScheduleStatus(enum.Enum):
+    PLANNED = "Planned"
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
 
 class userBase(BaseModel):
     user_id: str 
@@ -22,14 +34,14 @@ class customer(BaseModel):
     phone_number : str 
     address : str 
 
-class orderBase(BaseModel):
-    Order_id : str 
+class order(BaseModel):
+    order_id : str 
     customer_id: str 
-    order_date: str 
+    order_date: datetime
     deliver_address  : str 
     status : str 
-    Deliver_city : str 
-    full_price  : int 
+    deliver_city_id: str 
+    full_price  : float 
 
 class store(BaseModel):
     store_id : str 
@@ -165,3 +177,18 @@ class StoreUpdate(BaseModel):
     address : str
     contact_person: str 
     station_id : str 
+
+class create_new_order(order):
+    customer_id: str 
+    order_date: datetime
+    deliver_address  : str 
+    status : str 
+    deliver_city_id: str 
+    full_price  : float 
+
+class update_order(order):
+    order_date: datetime
+    deliver_address  : str
+    status : OrderStatus
+    deliver_city_id : str 
+    full_price  : float 
