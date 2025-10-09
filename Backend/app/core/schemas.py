@@ -138,3 +138,11 @@ class CustomerCreate(customerBase):
 
 class UserCreate(userBase):
     pass
+
+class City(BaseModel):
+    city_id: str 
+    city_name: str
+    province: str
+
+    class Config:
+        orm_mode = True
