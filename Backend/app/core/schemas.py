@@ -51,12 +51,14 @@ class store(BaseModel):
     contact_person : str 
     station_id : str 
 
-class routeBase(BaseModel):
+class route(BaseModel):
     route_id  : str 
     store_id : str 
     start_city_id : str 
     end_city_id : str 
     distance : int 
+    class Config:
+        orm_mode = True
 
 class routeOrderBase(BaseModel):
     route_order_id : str 
@@ -192,3 +194,19 @@ class update_order(order):
     status : OrderStatus
     deliver_city_id : str 
     full_price  : float 
+
+class route_create(route):
+    route_id  : str 
+    store_id : str
+    start_city_id : str 
+    end_city_id : str 
+    distance : int 
+    
+
+class route_update(route):
+    route_id  : str 
+    store_id : str 
+    start_city_id : str 
+    end_city_id : str 
+    distance : int 
+    
