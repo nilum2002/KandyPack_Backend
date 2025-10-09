@@ -24,6 +24,6 @@ def get_all_railway_station_by_station_id(db: db_dependency, station_id : str):
     if station is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"City with ID {station} not found."
+            detail=f"Railway station with ID {station} not found."
         )
     return station
