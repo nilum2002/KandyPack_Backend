@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, event, DateTime, Float, Date, Time, CheckConstraint, Enum, UniqueConstraint
 from app.core.database import Base
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, time 
 from sqlalchemy.orm import relationship, validates
 import uuid 
 import enum
@@ -18,12 +18,12 @@ class OrderStatus(enum.Enum):
     DELIVERED = "Delivered"
     FAILED = "Failed"
 
-class ScheduleStatus(enum.Enum):
-    PLANNED = "Planned"
-    IN_PROGRESS = "In Progress"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
 
+class ScheduleStatus(str, enum.Enum):
+    PLANNED = "PLANNED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED" 
 
 class Users(Base):
     __tablename__ = "users"

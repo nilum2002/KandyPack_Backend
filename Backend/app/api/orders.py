@@ -13,7 +13,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 def get_current_user():
-    return {"username": "admin", "role": "Management", "store_id": "store123"}
+    return {"username": "admin", "role": "Customer", "store_id": "store123"}
 
 
 
@@ -58,7 +58,7 @@ def create_order(order: schemas.create_new_order, db: db_dependency, current_use
     order_date_obj = order.order_date
     if order_date_obj.tzinfo is None:
         order_date_obj = sl_tz.localize(order_date_obj)
-    if order.order_date < now + timedelta(days=7):
+    if order_date_obj < now + timedelta(days=7):
         raise HTTPException(
             status_code=400,
             detail="Order date must be at least 7 days from today."

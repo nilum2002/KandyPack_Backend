@@ -2,8 +2,9 @@ from pydantic import BaseModel
 from typing import Annotated
 from app.core.database import engine
 import app.core.model as model
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, time
 import enum
+
 
 
 model.Base.metadata.create_all(bind= engine)
@@ -15,11 +16,12 @@ class OrderStatus(enum.Enum):
     SCHEDULED_ROAD =  "Scheduled for road"
     DELIVERED = "Delivered"
     FAILED = "Failed"
-class ScheduleStatus(enum.Enum):
-    PLANNED = "Planned"
-    IN_PROGRESS = "In Progress"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
+
+class ScheduleStatus(str, enum.Enum):
+    PLANNED = "PLANNED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED" 
 
 class userBase(BaseModel):
     user_id: str 
@@ -97,14 +99,19 @@ class Train(BaseModel):
     train_name : str 
     capacity : int 
 
-class Train_SchedulesBase(BaseModel):
+class Train_Schedules(BaseModel):
     schedule_id : str 
     train_id : str 
     station_id : str 
-    scheduled_date : str 
-    departure_time : str 
-    arrival_time : str 
-    status : str 
+    scheduled_date : date
+    departure_time : time
+    arrival_time : time
+    status : ScheduleStatus
+
+    class Config:
+        orm_mode = True
+        use_enum_values = True
+        from_attributes = True
 
 class RailwayAllocationBase(BaseModel):
     allocation_id : str 
@@ -189,7 +196,7 @@ class create_new_order(order):
     full_price  : float 
 
 class update_order(order):
-    order_date: datetime
+    order_date: date
     deliver_address  : str
     status : OrderStatus
     deliver_city_id : str 
@@ -210,3 +217,39 @@ class route_update(route):
     end_city_id : str 
     distance : int 
     
+class create_new_trainSchedule(Train_Schedules):
+    train_id : str 
+    station_id : str 
+    scheduled_date: datetime 
+    arrival_time  : time
+    departure_time : time
+    status: ScheduleStatus
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+
+# class update_trainSchedules(BaseModel):
+#     train_id : str | None = None
+#     station_id : str | None = None
+#     scheduled_date: datetime | None = None
+#     arrival_time: time | None = None
+#     departure_time: time | None = None
+#     status: ScheduleStatus | None = None
+    
+#     class Config:
+#         from_attributes = True
+#         use_enum_values = True
+
+
+class update_trainSchedules(Train_Schedules):
+    train_id : str 
+    station_id : str 
+    scheduled_date: datetime 
+    arrival_time  : time
+    departure_time : time
+    status: ScheduleStatus
+    
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+    pass
