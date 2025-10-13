@@ -11,6 +11,8 @@ from app.api.trains import router as trains
 from app.api.orders import router as orders
 from app.api.routes import router as routs
 from app.api.train_schedules import router as trainSchedules
+from app.api.truck_schedules import router as truckSchedules
+from app.api.allocations import router as allocations
 
 api_router = APIRouter()
 api_router.include_router(customer_router)
@@ -22,3 +24,6 @@ api_router.include_router(trains)
 api_router.include_router(orders)
 api_router.include_router(routs)
 api_router.include_router(trainSchedules)
+api_router.include_router(truckSchedules)
+api_router.include_router(allocations)
+

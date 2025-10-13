@@ -23,12 +23,25 @@ class ScheduleStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED" 
 
-class userBase(BaseModel):
-    user_id: str 
-    user_name : str 
-    password_hash: str 
-    role : str 
-    created_at : str 
+class UserBase(BaseModel):
+    user_name: str
+
+class UserCreate(UserBase):
+    password: str
+    role: str
+
+class UserUpdate(BaseModel):
+    user_name: str | None = None
+    password: str | None = None
+    role: str | None = None
+
+class UserResponse(UserBase):
+    user_id: str
+    role: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class customer(BaseModel):
     customer_id : str 
@@ -67,10 +80,22 @@ class routeOrderBase(BaseModel):
     route_id : str 
     order_id : str 
 
-class productBase(BaseModel):
-    product_type_id : str 
-    product_name : str 
-    space_consumption_rate : int 
+class ProductBase(BaseModel):
+    product_name: str
+    space_consumption_rate: float
+
+class ProductCreate(ProductBase):
+    pass
+
+class ProductUpdate(BaseModel):
+    product_name: str | None = None
+    space_consumption_rate: float | None = None
+
+class ProductResponse(ProductBase):
+    product_type_id: str
+
+    class Config:
+        from_attributes = True
 
 class order_itemsBase(BaseModel):
     item_id : str 
@@ -120,11 +145,23 @@ class RailwayAllocationBase(BaseModel):
     shipment_date : str 
     status : str 
 
-class driverBase(BaseModel):
-    driver_id : str 
-    name : str 
-    weekly_working_hours : int 
-    user_id : str 
+class DriverBase(BaseModel):
+    name: str
+    
+class DriverCreate(DriverBase):
+    user_id: str
+
+class DriverUpdate(BaseModel):
+    name: str | None = None
+    weekly_working_hours: int | None = None
+
+class DriverResponse(DriverBase):
+    driver_id: str
+    weekly_working_hours: int
+    user_id: str
+
+    class Config:
+        from_attributes = True
 
 class TruckBase(BaseModel):
     truck_id : str 
@@ -133,21 +170,36 @@ class TruckBase(BaseModel):
     is_active  : bool
 
 class AssistantBase(BaseModel):
-    assistant_id : str 
-    name : str 
-    weekly_working_hours : str 
-    user_id : str 
+    name: str
+    
+class AssistantCreate(AssistantBase):
+    user_id: str
 
-class Truck_SchedulesBase(BaseModel):
+class AssistantUpdate(BaseModel):
+    name: str | None = None
+    weekly_working_hours: int | None = None
+
+class AssistantResponse(AssistantBase):
+    assistant_id: str
+    weekly_working_hours: int
+    user_id: str
+
+    class Config:
+        from_attributes = True
+
+class Truck_Schedule(BaseModel):
     schedule_id : str 
     route_id : str 
     truck_id : str 
     driver_id : str 
     assistant_id : str 
-    scheduled_date : str 
-    departure_time : str 
-    duration : str 
-    status : str 
+    scheduled_date : date 
+    departure_time : time
+    duration : int  
+    status : ScheduleStatus
+    class Config:
+        orm_mode = True
+        use_enum_values = True
 
 class Truck_allocationBase(BaseModel):
     allocation_id : str 
@@ -168,8 +220,8 @@ class customerUpdate(customer):
     phone_number : str 
     address : str 
 
-class UserCreate(userBase):
-    pass
+class UserCreate(UserBase):
+    pass 
 
 
 class StoreCreate(BaseModel):
@@ -248,6 +300,22 @@ class update_trainSchedules(Train_Schedules):
     arrival_time  : time
     departure_time : time
     status: ScheduleStatus
+    
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+    pass
+
+class update_truckSchedules(Truck_Schedule):
+    schedule_id : str 
+    route_id : str 
+    truck_id : str 
+    driver_id : str 
+    assistant_id : str 
+    scheduled_date : date 
+    departure_time : time
+    duration : int  
+    status : ScheduleStatus
     
     class Config:
         from_attributes = True
