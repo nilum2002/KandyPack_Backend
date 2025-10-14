@@ -23,10 +23,12 @@ class ScheduleStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED" 
 
+# user 
 class UserBase(BaseModel):
     user_name: str
 
 class UserCreate(UserBase):
+    user_name: str 
     password: str
     role: str
 
@@ -42,12 +44,18 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
-
-class customer(BaseModel):
+# customer 
+class CustomerBase(BaseModel):
     customer_id : str 
     customer_name : str 
     phone_number : str 
     address : str 
+
+class CustomerCreate(BaseModel):
+    customer_name : str 
+    phone_number : str 
+    address : str 
+
 
 class order(BaseModel):
     order_id : str 
@@ -209,13 +217,9 @@ class Truck_allocationBase(BaseModel):
     status  : str 
 
 
-class CustomerCreate(customer):
-    customer_name : str 
-    phone_number : str 
-    address : str 
 
 
-class customerUpdate(customer):
+class customerUpdate(CustomerBase):
     customer_name : str 
     phone_number : str 
     address : str 

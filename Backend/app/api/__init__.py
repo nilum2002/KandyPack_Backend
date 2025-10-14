@@ -13,17 +13,19 @@ from app.api.routes import router as routs
 from app.api.train_schedules import router as trainSchedules
 from app.api.truck_schedules import router as truckSchedules
 from app.api.allocations import router as allocations
+from app.api.reports import router as reports_router 
 
 api_router = APIRouter()
-api_router.include_router(customer_router)
-api_router.include_router(user_router)
-api_router.include_router(city_router)
-api_router.include_router(railway_stations)
-api_router.include_router(stores)
-api_router.include_router(trains)
-api_router.include_router(orders)
-api_router.include_router(routs)
-api_router.include_router(trainSchedules)
-api_router.include_router(truckSchedules)
-api_router.include_router(allocations)
+api_router.include_router(customer_router, tags=["customer"])
+api_router.include_router(user_router, tags= ["users"])
+api_router.include_router(city_router, tags= ["Cities"])
+api_router.include_router(railway_stations, tags = ["Railway_Stations"])
+api_router.include_router(stores, tags = ["Stores"])
+api_router.include_router(trains,tags= ["Trains"])
+api_router.include_router(orders, tags = ["Orders"])
+api_router.include_router(routs, tags=["Routs"] )
+api_router.include_router(trainSchedules, tags = ["Train Allocations"])
+api_router.include_router(truckSchedules, tags = ["Truck Schedules"])
+api_router.include_router(allocations, tags = ["Allocations"])
+api_router.include_router(reports_router, tags=["reports"]) 
 

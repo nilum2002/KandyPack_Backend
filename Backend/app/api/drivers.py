@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated, List
 from app.core.database import get_db
 from app.core import model, schemas
-from app.core.security import get_current_user
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/drivers")
 db_dependency = Annotated[Session, Depends(get_db)]

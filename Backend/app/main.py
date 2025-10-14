@@ -9,7 +9,7 @@ app = FastAPI()
 
 model.Base.metadata.create_all(bind=engine)
 db_dependancy = Annotated[Session, Depends(get_db)]
-
+ 
 app.include_router(api_router)
 
 @app.get("/")
