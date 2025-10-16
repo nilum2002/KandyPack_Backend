@@ -82,7 +82,7 @@ CREATE TABLE order_items (
 
 -- Routes
 CREATE TABLE routes (
-    route_id CHAR(36) PRIMARY KEY,
+    route_id CHAR(36) PRIMARY KEY NOT NULL,
     store_id CHAR(36) NOT NULL,
     start_city_id CHAR(36) NOT NULL,
     end_city_id CHAR(36) NOT NULL,
