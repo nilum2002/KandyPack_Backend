@@ -8,37 +8,43 @@ from app.core.auth import get_current_user
 router = APIRouter(prefix="/assistants")
 db_dependency = Annotated[Session, Depends(get_db)]
 
-def check_management_role(current_user: dict):
-    if current_user.get("role") != "Management":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can perform this operation"
-        )
 
 @router.get("/", response_model=List[schemas.AssistantResponse], status_code=status.HTTP_200_OK)
 async def get_all_assistants(
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get all assistants (Management role required)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     
     assistants = db.query(model.Assistants).all()
+    if assistants is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"assistants not found."
+        )
     return assistants
 
 @router.get("/{assistant_id}", response_model=schemas.AssistantResponse, status_code=status.HTTP_200_OK)
 async def get_assistant(
     assistant_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get details of a specific assistant"""
     # Allow access if user is Management or is the assistant themselves
-    if current_user.get("role") != "Management" and current_user.get("user_id") != assistant_id:
+    role = current_user.get("role")
+    if role not in ["Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this assistant's data"
+            detail="You cannot access Routes"
         )
+    
     
     assistant = db.query(model.Assistants).filter(model.Assistants.assistant_id == assistant_id).first()
     if not assistant:
@@ -53,11 +59,15 @@ async def get_assistant(
 async def create_assistant(
     assistant: schemas.AssistantCreate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Create a new assistant (Management role required)"""
-    check_management_role(current_user)
-    
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     # Check if user exists and has Assistant role
     user = db.query(model.Users).filter(model.Users.user_id == assistant.user_id).first()
     if not user:
@@ -101,11 +111,16 @@ async def update_assistant(
     assistant_id: str,
     assistant_update: schemas.AssistantUpdate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Update assistant details (Management role required)"""
-    check_management_role(current_user)
     
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     # Check if assistant exists
     assistant = db.query(model.Assistants).filter(
         model.Assistants.assistant_id == assistant_id
@@ -145,10 +160,15 @@ async def update_assistant(
 async def delete_assistant(
     assistant_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Delete an assistant (Management role required)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Assistants "
+        )
     
     # Check if assistant exists
     assistant = db.query(model.Assistants).filter(

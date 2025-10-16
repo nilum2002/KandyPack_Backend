@@ -6,14 +6,11 @@ from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.core import model, schemas
 import pytz
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/orders")
 db_dependency = Annotated[Session, Depends(get_db)]
 
-
-
-def get_current_user():
-    return {"username": "admin", "role": "Customer", "store_id": "store123"}
 
 
 
@@ -37,7 +34,14 @@ def get_all_orders(db: db_dependency, current_user: dict = Depends(get_current_u
 
 
 @router.get("/{order_id}", response_model=schemas.order, status_code=status.HTTP_200_OK)
-def get_order(order_id: str, db: db_dependency):
+def get_order(order_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
+   
+    role = current_user.get("role")
+    if role not in ["StoreManager", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot Orders Routes"
+        )
     order = db.query(model.Orders).filter(model.Orders.order_id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
@@ -48,7 +52,6 @@ def get_order(order_id: str, db: db_dependency):
 @router.post("/", response_model=schemas.order, status_code=status.HTTP_201_CREATED)
 def create_order(order: schemas.create_new_order, db: db_dependency, current_user: dict = Depends(get_current_user)):
     role = current_user.get("role")
-
     if role not in ["Customer"]:
         raise HTTPException(status_code=403, detail="You do not have permission to create an order")
 
@@ -84,7 +87,7 @@ def create_order(order: schemas.create_new_order, db: db_dependency, current_use
 @router.put("/{order_id}", response_model=schemas.order, status_code=status.HTTP_200_OK)
 def update_order(order_id: str, order_update: schemas.update_order, db: db_dependency, current_user: dict = Depends(get_current_user)):
     role = current_user.get("role")
-    if role not in ["StoreManager", "Management", "admin"]:
+    if role not in ["Management"]:
         raise HTTPException(status_code=403, detail="You do not have permission to update this order")
 
     order = db.query(model.Orders).filter(model.Orders.order_id == order_id).first()

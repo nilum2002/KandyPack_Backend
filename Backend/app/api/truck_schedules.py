@@ -6,20 +6,22 @@ from datetime import datetime, timedelta, date , time
 from app.core.database import get_db
 from app.core import model, schemas
 import pytz
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+
+from app.core.auth import get_current_user
+
+
 
 router = APIRouter(prefix="/truckSchedules")
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-
-def get_current_user():
-    return {"username": "admin", "role": "Management", "store_id": "store123"}
-
 @router.get("/", response_model=List[schemas.Truck_Schedule], status_code=status.HTTP_200_OK)
-def get_all_truck_schedules(db: db_dependency,current_user: dict = Depends(get_current_user)):
-    
+def get_all_truck_schedules(db: db_dependency, current_user: dict = Depends(get_current_user)):
     role = current_user.get("role")
-    if role not in ["StoreManager", "Management", "Admin"]:
+   
+    if role not in ["Assistant", "Management", "Driver", "WarehouseStaff"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to view truck schedules"
@@ -39,7 +41,7 @@ def get_all_truck_schedules(db: db_dependency,current_user: dict = Depends(get_c
 def get_truck_schedule_by_id( schedule_id: str,db: db_dependency, current_user: dict = Depends(get_current_user)):
     
     role = current_user.get("role")
-    if role not in ["StoreManager", "Management", "Admin"]:
+    if role not in ["Assistant", "Management", "Driver", "WarehouseStaff"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to view this truck schedule"
@@ -57,15 +59,21 @@ def get_truck_schedule_by_id( schedule_id: str,db: db_dependency, current_user: 
 
 
 @router.post("/", response_model=schemas.Truck_Schedule, status_code=status.HTTP_201_CREATED)
-def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule,db: db_dependency,current_user: dict = Depends(get_current_user)):
+def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule, db: db_dependency, current_user: dict = Depends(get_current_user)):
     # Role check
-    if current_user.get("role") != "Management":
+    if current_user.get("role") != "Assistant":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can create truck schedules"
+            detail="Only Assistant can create truck schedules"
         )
 
-    
+    # Basic validations
+    if not new_truck_schedule.departure_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Departure time is required"
+        )
+
     sl_tz = pytz.timezone("Asia/Colombo")
     min_date = datetime.now(sl_tz).date() + timedelta(days=7)
     scheduled_date = new_truck_schedule.scheduled_date
@@ -78,12 +86,69 @@ def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule,db: db_depe
 
     # Ensure duration is an integer (minutes)
     if isinstance(new_truck_schedule.duration, time):
-        # Convert time to minutes if a time object was provided
         duration_minutes = new_truck_schedule.duration.hour * 60 + new_truck_schedule.duration.minute
     else:
         duration_minutes = new_truck_schedule.duration
 
-    # Create new truck schedule
+    # Validate foreign keys exist
+    if new_truck_schedule.route_id:
+        route = db.query(model.Routes).filter(model.Routes.route_id == new_truck_schedule.route_id).first()
+        if not route:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Route with ID {new_truck_schedule.route_id} not found")
+
+    if new_truck_schedule.truck_id:
+        truck = db.query(model.Trucks).filter(model.Trucks.truck_id == new_truck_schedule.truck_id).first()
+        if not truck:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Truck with ID {new_truck_schedule.truck_id} not found")
+
+    if new_truck_schedule.driver_id:
+        driver = db.query(model.Drivers).filter(model.Drivers.driver_id == new_truck_schedule.driver_id).first()
+        if not driver:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Driver with ID {new_truck_schedule.driver_id} not found")
+
+    if new_truck_schedule.assistant_id:
+        assistant = db.query(model.Assistants).filter(model.Assistants.assistant_id == new_truck_schedule.assistant_id).first()
+        if not assistant:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Assistant with ID {new_truck_schedule.assistant_id} not found")
+
+    # # Driver and assistant cannot be the same person
+    if new_truck_schedule.driver_id and new_truck_schedule.assistant_id and new_truck_schedule.driver_id == new_truck_schedule.assistant_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Driver and assistant cannot be the same person")
+
+    # Build new schedule time window (timezone-aware)
+    new_start = datetime.combine(scheduled_date, new_truck_schedule.departure_time) 
+    print(new_start)
+    new_end = new_start + timedelta(minutes=duration_minutes)
+    print(new_end)
+
+    # Check for overlapping schedules on the same date
+    existing_schedules = db.query(model.TruckSchedules).filter(model.TruckSchedules.scheduled_date == scheduled_date).all()
+
+    for s in existing_schedules:
+        # Skip if missing time or duration in existing record
+        if not s.departure_time or s.duration is None:
+            continue
+
+        exist_start = datetime.combine(s.scheduled_date, s.departure_time)
+        exist_end = exist_start + timedelta(minutes=s.duration)
+
+        # Overlap condition
+        if exist_start < new_end and exist_end > new_start:
+            print("Hi")
+            # Driver conflict
+            if new_truck_schedule.driver_id and s.driver_id == new_truck_schedule.driver_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Driver {new_truck_schedule.driver_id} has a conflicting schedule at {s.departure_time}")
+            # Assistant conflict
+            if new_truck_schedule.assistant_id and s.assistant_id == new_truck_schedule.assistant_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Assistant {new_truck_schedule.assistant_id} has a conflicting schedule at {s.departure_time}")
+            # Truck conflict
+            if new_truck_schedule.truck_id and s.truck_id == new_truck_schedule.truck_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Truck {new_truck_schedule.truck_id} is already scheduled at {s.departure_time}")
+            # Route conflict (optional: prevent same route overlapping)
+            if new_truck_schedule.route_id and s.route_id == new_truck_schedule.route_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Route {new_truck_schedule.route_id} already has a schedule overlapping this time")
+
+    # Create new truck schedule 
     truck_schedule = model.TruckSchedules(
         route_id=new_truck_schedule.route_id,
         truck_id=new_truck_schedule.truck_id,
@@ -95,19 +160,22 @@ def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule,db: db_depe
         status=new_truck_schedule.status
     )
 
-    db.add(truck_schedule)
-    db.commit()
-    db.refresh(truck_schedule)
-
-    return truck_schedule
+    try:
+        db.add(truck_schedule)
+        db.commit()
+        db.refresh(truck_schedule)
+        return truck_schedule
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.put("/{schedule_id}", response_model=schemas.Truck_Schedule, status_code=status.HTTP_200_OK)
 def update_truck_schedule(schedule_id: str, update_data: schemas.Truck_Schedule, db: db_dependency, current_user: dict = Depends(get_current_user)):
 
-    if current_user.get("role") != "Management":
+    if current_user.get("role") not in  [ "Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can update truck schedules"
+            detail="Only Management and assistant can update truck schedules"
         )
 
     # Check if schedule exists
@@ -167,7 +235,7 @@ def update_truck_schedule(schedule_id: str, update_data: schemas.Truck_Schedule,
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Scheduled date must be at least 7 days from today"
             )
-         
+
 
     # Check if there are any existing allocations
     allocations = db.query(model.TruckAllocations).filter(
@@ -202,10 +270,10 @@ def update_truck_schedule(schedule_id: str, update_data: schemas.Truck_Schedule,
 @router.delete("/{schedule_id}", status_code=status.HTTP_200_OK)
 def delete_truck_schedule(schedule_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
     # Check role
-    if current_user.get("role") != "Management":
+    if current_user.get("role") not in  [ "Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can delete truck schedules"
+            detail="Only Management and assistant can update truck schedules"
         )
     
     # Fetch the schedule

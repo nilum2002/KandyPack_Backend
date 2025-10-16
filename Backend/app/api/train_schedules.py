@@ -6,14 +6,15 @@ from datetime import datetime, timedelta, date , time
 from app.core.database import get_db
 from app.core import model, schemas
 import pytz
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/trainSchedules")
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
 
-def get_current_user():
-    return {"username": "admin", "role": "Management", "store_id": "store123"}
+# def get_current_user():
+#     return {"username": "admin", "role": "Management", "store_id": "store123"}
 
 
 
@@ -60,7 +61,7 @@ def get_train_schedule_by_scheduled_id(scheduled_id : str, db: db_dependency, cu
 @router.post("/", response_model=schemas.Train_Schedules, status_code=status.HTTP_200_OK)
 def create_new_train_schedule( new_train_schedule: schemas.create_new_trainSchedule, db: db_dependency, current_user: dict = Depends(get_current_user)):
     role = current_user.get("role")
-    if role not in ["StoreManager", "Management", "Admin"]:
+    if role not in ["StoreManager", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You cannot access Schedules"
@@ -132,7 +133,7 @@ def update_train_schedule(schedule_id: str, update_data: schemas.update_trainSch
 def delete_train_schedule(schedule_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
 
     role = current_user.get("role")
-    if role not in ["Management", "Admin"]:
+    if role not in ["StoreManager", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to delete schedules"

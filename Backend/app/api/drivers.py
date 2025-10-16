@@ -8,38 +8,42 @@ from app.core.auth import get_current_user
 router = APIRouter(prefix="/drivers")
 db_dependency = Annotated[Session, Depends(get_db)]
 
-def check_management_role(current_user: dict):
-    if current_user.get("role") != "Management":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can perform this operation"
-        )
+
 
 @router.get("/", response_model=List[schemas.DriverResponse], status_code=status.HTTP_200_OK)
 async def get_all_drivers(
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get all drivers (Management role required)"""
-    check_management_role(current_user)
-    
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Drivers"
+        )
     drivers = db.query(model.Drivers).all()
+    if drivers is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"routes not found."
+        )
     return drivers
 
 @router.get("/{driver_id}", response_model=schemas.DriverResponse, status_code=status.HTTP_200_OK)
 async def get_driver(
     driver_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get details of a specific driver"""
     # Allow access if user is Management or is the driver themselves
-    if current_user.get("role") != "Management" and current_user.get("user_id") != driver_id:
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this driver's data"
+            detail="You cannot access Drivers"
         )
-    
     driver = db.query(model.Drivers).filter(model.Drivers.driver_id == driver_id).first()
     if not driver:
         raise HTTPException(
@@ -53,10 +57,15 @@ async def get_driver(
 async def create_driver(
     driver: schemas.DriverCreate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Create a new driver (Management role required)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     
     # Check if user exists and has Driver role
     user = db.query(model.Users).filter(model.Users.user_id == driver.user_id).first()
@@ -99,10 +108,15 @@ async def update_driver(
     driver_id: str,
     driver_update: schemas.DriverUpdate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Update driver details (Management role required)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     
     # Check if driver exists
     driver = db.query(model.Drivers).filter(model.Drivers.driver_id == driver_id).first()
@@ -141,10 +155,15 @@ async def update_driver(
 async def delete_driver(
     driver_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Delete a driver (Management role required)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Drivers"
+        )
     
     # Check if driver exists
     driver = db.query(model.Drivers).filter(model.Drivers.driver_id == driver_id).first()

@@ -25,9 +25,15 @@ def check_product_access(current_user: dict):
 @router.get("/", response_model=List[schemas.ProductResponse], status_code=status.HTTP_200_OK)
 async def get_all_products(
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get all products"""
+    role = current_user.get("role")
+    if role not in ["Management", "StoreManager"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     products = db.query(model.Products).all()
     if not products:
         raise HTTPException(
@@ -40,9 +46,15 @@ async def get_all_products(
 async def get_product(
     product_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get details of a specific product"""
+    role = current_user.get("role")
+    if role not in ["Management", "StoreManager"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     product = db.query(model.Products).filter(
         model.Products.product_type_id == product_id
     ).first()
@@ -59,10 +71,15 @@ async def get_product(
 async def create_product(
     product: schemas.ProductCreate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Create a new product (requires StoreManager or Management role)"""
-    check_product_access(current_user)
+    role = current_user.get("role")
+    if role not in ["Management", "StoreManager"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
     
     # Check if product with same name exists
     existing_product = db.query(model.Products).filter(
@@ -106,10 +123,16 @@ async def update_product(
     product_id: str,
     product_update: schemas.ProductUpdate,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Update product details (requires Management role)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
+    
     
     # Check if product exists
     product = db.query(model.Products).filter(
@@ -163,10 +186,16 @@ async def update_product(
 async def delete_product(
     product_id: str,
     db: db_dependency,
-    current_user: dict = Security(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Delete a product (requires Management role)"""
-    check_management_role(current_user)
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Routes"
+        )
+    
     
     # Check if product exists
     product = db.query(model.Products).filter(

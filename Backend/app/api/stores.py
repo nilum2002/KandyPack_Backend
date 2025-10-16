@@ -4,20 +4,37 @@ import app.core.model as model
 from typing import Annotated, List
 from sqlalchemy.orm import Session
 from app.core import model, schemas
-from uuid import UUID
-
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/stores")
 model.Base.metadata.create_all(bind=engine)
 db_dependency = Annotated[Session, Depends(get_db)]
 
 @router.get("/", status_code=status.HTTP_200_OK,response_model=List[schemas.store])
-def get_all_stores(db: db_dependency):
+def get_all_stores(db: db_dependency, current_user: dict = Depends(get_current_user)):
+    role = current_user.get("role")
+    if role not in ["WarehouseStaff", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Stores"
+        )
     stores = db.query(model.Stores).all()
+    if stores is None :
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"stores not found."
+        )
     return stores
 
 @router.get("/stores{store_id}", status_code=status.HTTP_200_OK)
-def get_store_by_id(db: db_dependency, store_id: str ):
+def get_store_by_id(db: db_dependency, store_id: str,  current_user: dict = Depends(get_current_user) ):
+    role = current_user.get("role")
+    if role not in ["WarehouseStaff", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Stores"
+        )
+    
     store = db.query(model.Stores).filter(model.Stores.store_id == store_id).first()
     if store is None :
         raise HTTPException(
@@ -27,15 +44,13 @@ def get_store_by_id(db: db_dependency, store_id: str ):
     return store
 
 
-def get_current_user():
-    return {"username": "admin", "role": "Management"}
-
 @router.post("/", status_code=status.HTTP_200_OK, response_model=schemas.store)
 def create_store(store: schemas.StoreCreate, db: db_dependency, current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "Management":
+    role = current_user.get("role")
+    if role not in ["WarehouseStaff", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create a store."
+            detail="You cannot access Stores"
         )
     station = db.query(model.RailwayStations).filter(model.RailwayStations.station_id == store.station_id).first()
     if not station:
@@ -58,16 +73,17 @@ def create_store(store: schemas.StoreCreate, db: db_dependency, current_user: di
 
 @router.put("/{store_id}", status_code=status.HTTP_200_OK)
 def update_store(store_id: str , store_update: schemas.StoreUpdate, db: db_dependency, current_user: dict = Depends(get_current_user)):
+    role = current_user.get("role")
+    if role not in ["WarehouseStaff", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Stores"
+        )
     store = db.query(model.Stores).filter(model.Stores.store_id == store_id).first()
     if not store:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Store with ID {store_id} not found."
-        )
-    if current_user.get("role") != "Management":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to Update a store."
         )
     update_data = store_update.model_dump(exclude_unset=True)
     if "station_id" in update_data:
@@ -86,19 +102,21 @@ def update_store(store_id: str , store_update: schemas.StoreUpdate, db: db_depen
     return store
 
 @router.delete("/{store_id}", status_code=status.HTTP_200_OK)
-def delete_store(store_id: str , store_update: schemas.StoreUpdate, db: db_dependency, current_user: dict = Depends(get_current_user)):
+def delete_store(store_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
+
+    role = current_user.get("role")
+    if role not in ["WarehouseStaff", "Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Stores"
+        )
     store = db.query(model.Stores).filter(model.Stores.store_id == store_id).first()
     if not store:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Store with ID {store_id} not found."
         )
-    if current_user.get("role") != "Management":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to Update a store."
-        )
-   
+    
     db.delete(store)
     db.commit()
     return {"detail": f"Store with ID {store_id} has been deleted successfully."}

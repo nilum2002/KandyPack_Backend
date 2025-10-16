@@ -8,74 +8,52 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core import model  # uses your model.Users
-
-# Config (use environment variables in production)
-SECRET_KEY = os.getenv("KANDYPACK_SECRET_KEY", "dev-secret-change-me")
-ALGORITHM = os.getenv("KANDYPACK_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("KANDYPACK_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
-# app/core/auth.py
-import os
-from datetime import datetime, timedelta
-from typing import Union, Dict
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.core import model  # uses your model.Users
-
-# Config (use environment variables in production)
-SECRET_KEY = os.getenv("KANDYPACK_SECRET_KEY", "dev-secret-change-me")
-ALGORITHM = os.getenv("KANDYPACK_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("KANDYPACK_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")  # ensure login uses this path
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")  # ensure login uses this path
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-import os
-from datetime import datetime, timedelta
-from typing import Union, Dict
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.core import model
+from passlib.exc import UnknownHashError
+import hashlib
 
 # Security configuration (use env vars in production)
 SECRET_KEY = os.getenv("KANDYPACK_SECRET_KEY", "dev-secret-change-me")
 ALGORITHM = os.getenv("KANDYPACK_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("KANDYPACK_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("KANDYPACK_ACCESS_TOKEN_EXPIRE_MINUTES", "100"))
 
 # Password hashing and OAuth2 scheme
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password"""
+
     return pwd_context.verify(plain_password, hashed_password)
 
+# def verify_password(plain_password: str, hashed_password: str) -> bool:
+#     """
+#     Primary: try passlib verify (supports pbkdf2_sha256).
+#     Fallback: legacy unsalted SHA256 hex digests (in DB).
+#     """
+#     try:
+#         return pwd_context.verify(plain_password, hashed_password)
+#     except UnknownHashError:
+#         # Legacy: raw SHA-256 hex digest
+#         try:
+#             candidate = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
+#             return candidate == (hashed_password or "")
+#         except Exception:
+#             return False
+        
 def get_password_hash(password: str) -> str:
     """Generate a hash from a plain password"""
+    
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:
     """Create a JWT access token"""
-    to_encode = data.copy()
+    to_encode = data.copy() 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.utcnow() + expires_delta  
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) 
     return encoded_jwt
 
 def _get_user_by_id(db: Session, user_id: str):
@@ -99,7 +77,7 @@ async def get_current_user(db: Session = Depends(get_db), token: str = Depends(o
     user = _get_user_by_id(db, user_id)
     if user is None:
         raise credentials_exception
-
+    # print(user.role)
     return {"user_id": user.user_id, "username": user.user_name, "role": user.role}
 
 def require_management(current_user: Dict = Depends(get_current_user)) -> Dict:

@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from typing import Annotated, List
 from app.core.database import get_db, engine
 from app.core import model, schemas
+
+from pydantic import BaseModel
+from fastapi import Security
+
 from app.core.auth import (
     verify_password,
     create_access_token,
@@ -18,11 +22,21 @@ router = APIRouter(prefix="/users")
 model.Base.metadata.create_all(bind=engine)
 db_dependency = Annotated[Session, Depends(get_db)]
 
+class TextIn(BaseModel):
+    text: str
+
+@router.post("/strtopass")
+async def str_to_pass(payload: TextIn):
+    """Convert given string to its hashed password form (Management role required)"""
+    hashed = get_password_hash(payload.text)
+    return {"hash": hashed}
+
 
 @router.post("/login")
 async def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     """Authenticate user and return JWT token"""
     user = db.query(model.Users).filter(model.Users.user_name == form_data.username).first()
+
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -36,7 +50,7 @@ async def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestF
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user_id": user.user_id,
+        "user_id": user.user_id, 
         "username": user.user_name,
         "role": user.role,
     }

@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core import model, schemas
 import pytz
 from enum import Enum
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/allocations")
 db_dependency = Annotated[Session, Depends(get_db)]
@@ -14,8 +15,6 @@ class AllocationType(str, Enum):
     RAIL = "Rail"
     TRUCK = "Truck"
 
-def get_current_user():
-    return {"username": "admin", "role": "Management", "store_id": "store123"}
 
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_all_allocations(
@@ -23,10 +22,11 @@ def get_all_allocations(
     current_user: dict = Depends(get_current_user)
 ):
     """Get all allocations (both rail and truck)"""
-    if current_user.get("role") not in ["StoreManager", "Management", "Admin"]:
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view allocations"
+            detail="You cannot access Routes"
         )
 
     # Get both rail and truck allocations
@@ -65,10 +65,11 @@ def get_allocation_by_id(
     current_user: dict = Depends(get_current_user)
 ):
     """Get a specific allocation by ID"""
-    if current_user.get("role") not in ["StoreManager", "Management", "Admin"]:
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view allocations"
+            detail="You cannot access Routes"
         )
 
     # Try to find in rail allocations first
@@ -116,10 +117,11 @@ def create_allocation(
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new allocation"""
-    if current_user.get("role") not in ["StoreManager", "Management"]:
+    role = current_user.get("role")
+    if role not in ["Assistant"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create allocations"
+            detail="You cannot access Routes"
         )
 
     # Validate order exists
@@ -202,12 +204,12 @@ def update_allocation(
     status: model.ScheduleStatus = None
 ):
     """Update an allocation"""
-    if current_user.get("role") != "Management":
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can update allocations"
+            detail="You cannot access Allocations"
         )
-
     # Try to find and update in rail allocations first
     rail_allocation = db.query(model.RailAllocations).filter(
         model.RailAllocations.allocation_id == allocation_id
@@ -268,10 +270,11 @@ def delete_allocation(
     current_user: dict = Depends(get_current_user)
 ):
     """Delete an allocation"""
-    if current_user.get("role") != "Management":
+    role = current_user.get("role")
+    if role not in ["Assistant", "Management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Management can delete allocations"
+            detail="You cannot access Routes"
         )
 
     # Try to find and delete in rail allocations first

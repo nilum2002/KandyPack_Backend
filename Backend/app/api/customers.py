@@ -4,33 +4,43 @@ import app.core.model as model
 from typing import Annotated, List
 from sqlalchemy.orm import Session
 from app.core import model, schemas
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/customers")
 model.Base.metadata.create_all(bind=engine)
 db_dependency = Annotated[Session, Depends(get_db)]
 
-# dummy 
-def get_current_user():
-    return {"username": "admin", "role": "Management"}  # Replace with real auth
+
 
 @router.get("/", response_model=List[schemas.CustomerBase], status_code=status.HTTP_200_OK) 
-async def get_all_customers(db: db_dependency):
+async def get_all_customers(db: db_dependency, current_user: dict = Depends(get_current_user)):
     # check the role 
-
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access Customers"
+        )
     customers = db.query(model.Customers).all()
     if not customers:
         raise HTTPException(status_code=404, detail=f"Customers not found")
     return customers
 
 @router.get("/{customer_id}", response_model=schemas.CustomerBase, status_code=status.HTTP_200_OK)
-async def get_customer(customer_id: str, db: db_dependency):
+async def get_customer(customer_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access customers"
+        )
     customer = db.query(model.Customers).filter(model.Customers.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")
     return customer
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_customer(customer: schemas.CustomerCreate, db: db_dependency):
+async def create_customer(customer: schemas.CustomerCreate, db: db_dependency, current_user: dict = Depends(get_current_user)):
     new_customer = model.Customers(
         customer_name=customer.customer_name,
         phone_number = customer.phone_number, 
@@ -43,9 +53,12 @@ async def create_customer(customer: schemas.CustomerCreate, db: db_dependency):
 
 @router.put("/{customer_id}", response_model=schemas.CustomerBase, status_code=status.HTTP_200_OK)
 async def update_customer(customer_id: str, customer_update: schemas.customerUpdate, db: db_dependency, current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "Management":
-        raise HTTPException(status_code=403, detail="Only Management can update customers")
-    
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access customers"
+        )
     customer = db.query(model.Customers).filter(model.Customers.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")
@@ -62,9 +75,12 @@ async def update_customer(customer_id: str, customer_update: schemas.customerUpd
 
 @router.delete("/{customer_id}", status_code=status.HTTP_200_OK)
 async def delete_customer(customer_id: str, db: db_dependency, current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "Management":
-        raise HTTPException(status_code=403, detail="Only Management can delete customers")
-    
+    role = current_user.get("role")
+    if role not in ["Management"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot access customers"
+        )
     customer = db.query(model.Customers).filter(model.Customers.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")

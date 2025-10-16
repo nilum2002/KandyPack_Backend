@@ -22,7 +22,7 @@ def top_items_by_quarter(year, quarter, limit=20):
 def sales_by_city(start_date, end_date):
     return _call_proc("sp_sales_by_city", (start_date, end_date))
 
-def sales_by_route(start_date, end_date):
+def sales_by_route(start_date, end_date): 
     return _call_proc("sp_sales_by_route", (start_date, end_date))
 
 def driver_work_hours(start_date, end_date):
