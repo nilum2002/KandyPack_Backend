@@ -26,6 +26,8 @@ class ScheduleStatus(str, enum.Enum):
 # user 
 class UserBase(BaseModel):
     user_name: str
+    model_config = {"from_attributes": True}
+
 
 class UserCreate(UserBase):
     user_name: str 
@@ -42,8 +44,8 @@ class UserResponse(UserBase):
     role: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 # customer 
 class CustomerBase(BaseModel):
     customer_id : str 
@@ -56,7 +58,7 @@ class CustomerCreate(BaseModel):
     phone_number : str 
     address : str 
 
-
+# order 
 class order(BaseModel):
     order_id : str 
     customer_id: str 
@@ -102,8 +104,7 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     product_type_id: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class order_itemsBase(BaseModel):
     item_id : str 
@@ -224,9 +225,6 @@ class customerUpdate(CustomerBase):
     phone_number : str 
     address : str 
 
-class UserCreate(UserBase):
-    pass 
-
 
 class StoreCreate(BaseModel):
     store_id : str 
@@ -272,6 +270,7 @@ class route_update(route):
     start_city_id : str 
     end_city_id : str 
     distance : int 
+    
     
 class create_new_trainSchedule(Train_Schedules):
     train_id : str 

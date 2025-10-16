@@ -72,7 +72,7 @@ class Stores(Base):
     station_id = Column(String(36), ForeignKey("railway_stations.station_id"), nullable=False)
     station = relationship("RailwayStations")
     __table_args__ = (
-        CheckConstraint("telephone_number  REGEXP '^\+?[0-9\-]+$'", name="valid_store_phone"),
+        CheckConstraint("telephone_number  REGEXP '^\\+?[0-9\-]+$'", name="valid_store_phone"),
     )
 
 
@@ -103,7 +103,7 @@ class Routes(Base):
     store = relationship("Stores")
     start_city = relationship("Cities", foreign_keys=[start_city_id])
     end_city = relationship("Cities", foreign_keys=[end_city_id])
-    truck_schedules = relationship("TruckSchedules", back_populates="route")
+    truck_schedules = relationship("TruckSchedules", back_populates="route", cascade="all, delete")
     __table_args__ = (
         CheckConstraint("distance > 0", name="positive_distance"),
     )
@@ -165,7 +165,7 @@ class TrainSchedules(Base):
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.PLANNED, nullable=False)
     train = relationship("Trains")
     station = relationship("RailwayStations")
-    rail_allocations = relationship("RailAllocations", back_populates="schedule")
+    rail_allocations = relationship("RailAllocations", back_populates="schedule", cascade="all, delete")
 
 
 class RailAllocations(Base):
@@ -177,7 +177,7 @@ class RailAllocations(Base):
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.PLANNED, nullable=False)
     order = relationship("Orders", back_populates="rail_allocations")
     schedule = relationship("TrainSchedules", back_populates="rail_allocations")
-    
+     
     @validates("shipment_date")
     def validate_shipment_date(self, key, value):
         if value < date.today():
@@ -231,7 +231,7 @@ class TruckSchedules(Base):
     truck = relationship("Trucks")
     driver = relationship("Drivers")
     assistant = relationship("Assistants")
-    truck_allocations = relationship("TruckAllocations", back_populates="schedule")
+    truck_allocations = relationship("TruckAllocations", back_populates="schedule", cascade="all, delete")
     __table_args__ = (
         CheckConstraint("duration > 0", name="positive_duration"),
     )
