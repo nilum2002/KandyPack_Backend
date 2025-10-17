@@ -1,14 +1,48 @@
 from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from app.core.database import get_db, engine
 import app.core.model as model
 from typing import Annotated, List
 from sqlalchemy.orm import Session
 from app.core import model, schemas
-from app.core.auth import get_current_user
+from app.core.auth import (
+    verify_password,
+    create_access_token,
+    get_password_hash,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    require_management,
+    get_current_customer,
+    get_current_user
+)
+from datetime import timedelta
 
 router = APIRouter(prefix="/customers")
 model.Base.metadata.create_all(bind=engine)
 db_dependency = Annotated[Session, Depends(get_db)]
+
+
+@router.post("/login")
+async def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+    """Authenticate user and return JWT token"""
+    customer = db.query(model.Customers).filter(model.Customers.customer_user_name == form_data.username).first()
+    print(customer)
+    if not customer or not verify_password(form_data.password, customer.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = create_access_token(data={"sub": customer.customer_id, "role": "Customer"}, expires_delta=access_token_expires)
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "customer_id": customer.customer_id, 
+        "customer_user_name": customer.customer_user_name,
+        "role": "Customer",
+    }
 
 
 

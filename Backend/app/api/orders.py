@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.core import model, schemas
 import pytz
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_current_customer
 
 router = APIRouter(prefix="/orders")
 db_dependency = Annotated[Session, Depends(get_db)]
@@ -50,7 +50,7 @@ def get_order(order_id: str, db: db_dependency, current_user: dict = Depends(get
 
 
 @router.post("/", response_model=schemas.order, status_code=status.HTTP_201_CREATED)
-def create_order(order: schemas.create_new_order, db: db_dependency, current_user: dict = Depends(get_current_user)):
+def create_order(order: schemas.create_new_order, db: db_dependency, current_user: dict = Depends(get_current_customer)):
     role = current_user.get("role")
     if role not in ["Customer"]:
         raise HTTPException(status_code=403, detail="You do not have permission to create an order")

@@ -48,15 +48,18 @@ class UserResponse(UserBase):
 
 # customer 
 class CustomerBase(BaseModel):
+    customer_user_name : str 
     customer_id : str 
     customer_name : str 
     phone_number : str 
     address : str 
 
 class CustomerCreate(BaseModel):
+    customer_user_name : str 
     customer_name : str 
     phone_number : str 
-    address : str 
+    address : str
+    password : str 
 
 # order 
 class order(BaseModel):

@@ -36,9 +36,11 @@ class Users(Base):
 class Customers(Base):
     __tablename__ = "customers"
     customer_id = Column(String(36), primary_key=True, index = True, default=generate_uuid)
+    customer_user_name = Column(String(50), unique=True, nullable= False)
     customer_name = Column(String(100), nullable= False)
     phone_number = Column(String(30),unique=True, nullable= False)
     address = Column(String(200), nullable= False)
+    password_hash = Column(String(255), nullable= False)
     # the relationship 
     orders = relationship("Orders", back_populates= "customer")
     __table_args__ = (
