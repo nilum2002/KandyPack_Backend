@@ -282,9 +282,8 @@ class create_new_trainSchedule(Train_Schedules):
     arrival_time  : time
     departure_time : time
     status: ScheduleStatus
-    class Config:
-        from_attributes = True
-        use_enum_values = True
+    model_config = {"from_attributes": True, "use_enum_values": True}
+    
 
 # class update_trainSchedules(BaseModel):
 #     train_id : str | None = None
@@ -298,6 +297,12 @@ class create_new_trainSchedule(Train_Schedules):
 #         from_attributes = True
 #         use_enum_values = True
 
+class Trucks(BaseModel):
+    truck_id : str 
+    license_num: str 
+    capacity : int
+    is_active : bool
+    model_config = {"from_attributes": True}
 
 class update_trainSchedules(Train_Schedules):
     train_id : str 

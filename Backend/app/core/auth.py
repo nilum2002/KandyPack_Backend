@@ -65,7 +65,7 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
     return encoded_jwt
 
 def _get_user_by_id(db: Session, user_id: str):
-    return db.query(model.Users).filter(model.Users.user_id == user_id).first()
+    return db.query(model.Users).filter(model.Users.user_id == user_id).first() 
 
 def _get_customer_by_id(db: Session, customer_id: str):
     return db.query(model.Customers).filter(model.Customers.customer_id == customer_id).first()

@@ -230,7 +230,7 @@ class TruckSchedules(Base):
     duration = Column(Integer, nullable=False)
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.PLANNED, nullable=False)
     route = relationship("Routes", back_populates="truck_schedules")
-    truck = relationship("Trucks")
+    truck = relationship("Trucks",  cascade="all, delete")
     driver = relationship("Drivers")
     assistant = relationship("Assistants")
     truck_allocations = relationship("TruckAllocations", back_populates="schedule", cascade="all, delete")

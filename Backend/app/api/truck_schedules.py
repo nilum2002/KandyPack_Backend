@@ -116,13 +116,51 @@ def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule, db: db_dep
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Driver and assistant cannot be the same person")
 
     # Build new schedule time window (timezone-aware)
-    new_start = datetime.combine(scheduled_date, new_truck_schedule.departure_time) 
-    print(new_start)
+    new_start = datetime.combine(scheduled_date, new_truck_schedule.departure_time)
     new_end = new_start + timedelta(minutes=duration_minutes)
-    print(new_end)
+   
 
     # Check for overlapping schedules on the same date
     existing_schedules = db.query(model.TruckSchedules).filter(model.TruckSchedules.scheduled_date == scheduled_date).all()
+    # get the consecutive routes 
+    if new_truck_schedule.assistant_id:
+        # collect assistant's schedules on same date (exclude records missing time/duration)
+        assistant_schedules = []
+        for s in existing_schedules:
+            if s.assistant_id != new_truck_schedule.assistant_id:
+                continue
+            if not s.departure_time or s.duration is None:
+                continue
+            # existing record duration may be stored as time or minutes
+            if isinstance(s.duration, time):
+                s_dur = s.duration.hour * 60 + s.duration.minute
+            else:
+                s_dur = s.duration
+            s_start = datetime.combine(s.scheduled_date, s.departure_time)
+            s_end = s_start + timedelta(minutes=s_dur)
+            assistant_schedules.append((s_start, s_end))
+
+        # include the new schedule
+        assistant_schedules.append((new_start, new_end))
+
+        # sort by start time and detect runs of consecutive/overlapping schedules
+        assistant_schedules.sort(key=lambda x: x[0])
+        run_count = 1
+        prev_start, prev_end = assistant_schedules[0]
+        for cur_start, cur_end in assistant_schedules[1:]:
+            # consider schedules consecutive if they overlap or touch (no gap)
+            if cur_start <= prev_end:
+                run_count += 1
+            else:
+                run_count = 1
+            # update the current window end for chaining overlaps
+            prev_end = max(prev_end, cur_end)
+            prev_start = cur_start
+            if run_count > 2:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Assistant {new_truck_schedule.assistant_id} cannot be scheduled for more than two consecutive routes"
+                )
 
     for s in existing_schedules:
         # Skip if missing time or duration in existing record
@@ -134,7 +172,7 @@ def create_truck_schedule(new_truck_schedule: schemas.Truck_Schedule, db: db_dep
 
         # Overlap condition
         if exist_start < new_end and exist_end > new_start:
-            print("Hi")
+        
             # Driver conflict
             if new_truck_schedule.driver_id and s.driver_id == new_truck_schedule.driver_id:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Driver {new_truck_schedule.driver_id} has a conflicting schedule at {s.departure_time}")
